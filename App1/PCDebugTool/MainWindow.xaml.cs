@@ -24,23 +24,41 @@ namespace PCDebugTool
     /// </summary>
     public partial class MainWindow : Window
     {
-        UdpClient udpsock;
-        int port = 2005;
+        byte[] recbuff = new byte[64000];
+        Socket sndsock;
+        int port = 12005;
+        IPEndPoint broadcastIpep;
+        EndPoint remoteipep = new IPEndPoint(IPAddress.Any, 0);
         IPEndPoint recipep;
         IPEndPoint broadcastipep;
+        IPEndPoint sndipep;
         Timer timer;
         public MainWindow()
         {
             InitializeComponent();
-            
+
 
         }
 
         private void initNetwork()
         {
+            broadcastIpep = new IPEndPoint(IPAddress.Broadcast, port);
             recipep = new IPEndPoint(IPAddress.Any, port);
-            udpsock = new UdpClient(recipep);
-            udpsock.Client.Blocking = false;
+            IPAddress[] addresses = Dns.GetHostAddresses(Dns.GetHostName());
+            foreach (var item in addresses)
+            {
+                if (item.ToString().StartsWith("10.1.1"))
+                {
+                    sndipep = new IPEndPoint(item, port);
+                    break;
+                }
+            }
+            sndsock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            
+            sndsock.Bind(sndipep);
+            sndsock.Blocking = false;
+            //sndsock.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, 1);
+            sndsock.EnableBroadcast = true;
             broadcastipep = new IPEndPoint(IPAddress.Broadcast, port);
             timer = new Timer(1000);
             timer.Elapsed += Timer_Elapsed;
@@ -53,24 +71,64 @@ namespace PCDebugTool
         }
         async void UpdateNetwork()
         {
-            var recres = await udpsock.ReceiveAsync();
-            var str = System.Text.Encoding.UTF8.GetString(recres.Buffer);
-            this.Title = str;
-            
-            
+
+            var canread = sndsock.Poll(1, SelectMode.SelectRead);
+            if (!canread)
+            {
+                return;
+            }
+            var reccnt = sndsock.ReceiveFrom(recbuff, ref remoteipep);
+            if (reccnt > 0)
+            {
+
+                var str = System.Text.Encoding.UTF8.GetString(recbuff, 0, reccnt);
+
+                this.Title = str;
+            }
+
+
         }
         private void mainCanvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
             var pos = e.GetPosition(mainCanvas);
             var str = $"{pos.X},{pos.Y}";
-            var buf = Encoding.UTF8.GetBytes(str);
-            udpsock.SendAsync(buf, buf.Length);
+            var buff = Encoding.UTF8.GetBytes(str);
+            try
+            {
+                sndsock.SendTo(buff, buff.Length, SocketFlags.None, broadcastIpep);
+
+            }
+            catch (System.Exception ex)
+            {
+                this.Title = ex.Message;
+                throw;
+            }
         }
         private void button_debugmsg_Click(object sender, RoutedEventArgs e)
         {
-            var buf = Encoding.UTF8.GetBytes(textbox_debugmsg.Text);
-            udpsock.SendAsync(buf, buf.Length,broadcastipep);
-            
+
+            //var canwrite = sndsock.Poll(1, SelectMode.SelectWrite);
+            //if (!canwrite)
+            //{
+            //    return;
+            //}
+
+
+            var buff = Encoding.UTF8.GetBytes(textbox_debugmsg.Text);
+            try
+            {
+                if(sndsock.LocalEndPoint!=null) System.Diagnostics.Debug.WriteLine(sndsock.LocalEndPoint.ToString());
+                sndsock.SendTo(buff, buff.Length, SocketFlags.None, broadcastIpep);
+
+            }
+            catch (System.Exception ex)
+            {
+                this.Title = ex.Message;
+                throw;
+            }
+
+
+
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
