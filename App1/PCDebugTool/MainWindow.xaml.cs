@@ -54,7 +54,7 @@ namespace PCDebugTool
                 }
             }
             sndsock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            
+
             sndsock.Bind(sndipep);
             sndsock.Blocking = false;
             //sndsock.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, 1);
@@ -117,7 +117,7 @@ namespace PCDebugTool
             var buff = Encoding.UTF8.GetBytes(textbox_debugmsg.Text);
             try
             {
-                if(sndsock.LocalEndPoint!=null) System.Diagnostics.Debug.WriteLine(sndsock.LocalEndPoint.ToString());
+                if (sndsock.LocalEndPoint != null) System.Diagnostics.Debug.WriteLine(sndsock.LocalEndPoint.ToString());
                 sndsock.SendTo(buff, buff.Length, SocketFlags.None, broadcastIpep);
 
             }
@@ -134,6 +134,18 @@ namespace PCDebugTool
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             initNetwork();
+        }
+
+
+
+        App1.App1Client @ac = new App1.App1Client();
+        App1.App1Server @as = new App1.App1Server();
+
+        private void Connect_Click(object sender, RoutedEventArgs e)
+        {
+            ac.Update();
+            @as.Update();
+
         }
     }
 }

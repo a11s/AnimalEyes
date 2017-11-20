@@ -10,36 +10,24 @@ namespace App1
     using System.Timers;
     using Android.Bluetooth;
     using System.Linq;
+    using System;
+
     [Activity(Label = "App1", MainLauncher = true, Icon = "@mipmap/icon")]
     public class MainActivity : Activity
     {
-        Socket recsock;
-        Socket sndsock;
 
-        IPEndPoint sndipep;
-        IPEndPoint recipep;
-        EndPoint remoteipep = new IPEndPoint(IPAddress.Any, 0);
-        byte[] recbuff = new byte[64000];
         int count = 1;
         bool AutoSendData = false;
         ImageView Image1 = null;
         Button Button1 = null;
         TextView Label1 = null;
         CheckBox Checkbox1 = null;
-        protected override void OnCreate(Bundle savedInstanceState)
+
+        void InitComponents()
         {
-            this.SetTheme(Android.Resource.Style.ThemeNoTitleBarFullScreen);//全屏并且无标题栏，必须在OnCreate前面设置。
-
-            base.OnCreate(savedInstanceState);
-
-            // Set our view from the "main" layout resource
-            SetContentView(Resource.Layout.Main);
-
             // Get our button from the layout resource,
             // and attach an event to it
             Button1 = FindViewById<Button>(Resource.Id.myButton);
-            //button.Visibility = Android.Views.ViewStates.Gone;
-            //InputStream input = Assets.Open("mouse1.png");
             var input = Assets.Open("mouse1.png");
             Button1.Click += delegate { Button1.Text = string.Format("{0} clicks!", count++); };
             Checkbox1 = FindViewById<CheckBox>(Resource.Id.checkBox1);
@@ -51,6 +39,19 @@ namespace App1
             Image1.LayoutParameters = lp;
 
             Label1 = FindViewById<TextView>(Resource.Id.textView1);
+        }
+        protected override void OnCreate(Bundle savedInstanceState)
+        {
+            this.SetTheme(Android.Resource.Style.ThemeNoTitleBarFullScreen);//全屏并且无标题栏，必须在OnCreate前面设置。
+
+            base.OnCreate(savedInstanceState);
+
+            // Set our view from the "main" layout resource
+            SetContentView(Resource.Layout.Main);
+
+            InitComponents();
+
+
 
             InitNetwork();
 
@@ -65,28 +66,34 @@ namespace App1
         Timer timer;
         IPEndPoint broadcastIpep;
         int Port = 2005;
+        bool? isServer = null;
+        App1Server server = null;
+        App1Client client = null;
         void InitNetwork()
         {
-            broadcastIpep = new IPEndPoint(IPAddress.Broadcast, Port);
-            IPAddress[] addresses = Dns.GetHostAddresses(Dns.GetHostName());
-            foreach (var item in addresses)
+            if (timer != null)
             {
-                if (item.ToString().StartsWith("192."))
+                timer.Dispose();
+                timer = null;
+            }
+            isServer = App1Client.IsServer();
+            if (isServer == null)
+            {
+                //得过一段时间重试
+            }
+            else
+            {
+                if (isServer == true)
                 {
-                    //sndipep = new IPEndPoint(IPAddress.Any, Port);
-                    recipep = new IPEndPoint(item, Port);
-                    sndipep = new IPEndPoint(item, Port);
-                    break;
+                    server = new App1Server();
+                    server.GetSendData = GetSendData;
+                }
+                else
+                {
+                    client = new App1Client();
+                    client.OnDataArrival = OnDataArrival;
                 }
             }
-            sndsock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            sndsock.Bind(sndipep);
-            sndsock.EnableBroadcast = true;
-            sndsock.Blocking = false;
-
-            recsock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            recsock.Bind(recipep);
-            recsock.Blocking = false;
 
             timer = new Timer(1000);
             timer.Elapsed += Timer_Elapsed;
@@ -95,21 +102,40 @@ namespace App1
             Label1.Text = GetIPAddress();
 
         }
-        public string GetIPAddress()
-        {
-            //IPAddress[] addresses = Dns.GetHostAddresses(Dns.GetHostName());
 
-            //if (addresses != null && addresses[0] != null)
-            //{
-            //    return addresses[0].ToString();
-            //}
-            //else
-            //{
-            //    return null;
-            //}
-            return sndipep.ToString();
+        private void OnDataArrival(MsgPack obj)
+        {
+            Label1.Text = $"{obj.X},{obj.Y}";
         }
 
+        private MsgPack? GetSendData()
+        {
+            if (AutoSendData)
+            {
+                return new MsgPack() { X = DateTime.Now.Minute, Y = DateTime.Now.Second };
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public string GetIPAddress()
+        {
+            IPAddress[] addresses = Dns.GetHostAddresses(Dns.GetHostName());
+
+            if (addresses != null && addresses[0] != null)
+            {
+                return addresses[0].ToString();
+            }
+            else
+            {
+                return string.Empty;
+            }
+
+        }
+
+        #region bluetooth
 
         async void InitBluetooth()
         {
@@ -138,7 +164,7 @@ namespace App1
                 {
                     sock.Connect();//连接服务器
                                    //启动新的线程，开始传输数据
-                    System.Threading.Thread t = new System.Threading.Thread(connected);
+                    System.Threading.Thread t = new System.Threading.Thread(btconnected);
                     t.Start(sock);
                     break;
                 }
@@ -151,10 +177,11 @@ namespace App1
 
 
         }
-        void connected()
+        void btconnected()
         {
 
         }
+        #endregion
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
             this.RunOnUiThread(
@@ -172,40 +199,26 @@ namespace App1
 
         void UpdateNetwork()
         {
-            var canread = recsock.Poll(1, SelectMode.SelectRead);
-            if (!canread)
+            if (isServer == null)
             {
-                return;
+                InitNetwork();
             }
-            var reccnt = recsock.ReceiveFrom(recbuff, ref remoteipep);
-            if (reccnt > 0)
+            else
             {
-
-                var str = System.Text.Encoding.UTF8.GetString(recbuff, 0, reccnt);                
-                Button1.Text = str;
+                if (isServer == true)
+                {
+                    server.Update();
+                }
+                else
+                {
+                    client.Update();
+                }
             }
         }
 
         void SendData()
         {
-            var canwrite = sndsock.Poll(1, SelectMode.SelectWrite);
-            if (!canwrite)
-            {
-                return;
-            }
-            var str = Label1.Text + " " + System.DateTime.Now.ToString();
-            var buff = System.Text.Encoding.UTF8.GetBytes(str);
-            try
-            {
-                sndsock.SendTo(buff, broadcastIpep);
-                //sndsock.SendTo(buff, buff.Length, SocketFlags.None| SocketFlags.Multicast, broadcastIpep);
 
-            }
-            catch (System.Exception ex)
-            {
-                Button1.Text = ex.Message;
-                throw;
-            }
         }
     }
 }

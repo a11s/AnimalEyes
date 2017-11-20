@@ -7,7 +7,9 @@
         mc:Ignorable="d"
         Title="MainWindow" x:Name="MainWindow1" Height="350" Width="525" Loaded="MainWindow_Loaded">
     <Grid>
-        <Canvas x:Name="mainCanvas" MouseUp="mainCanvas_MouseUp"></Canvas>
+        <Canvas x:Name="mainCanvas" MouseUp="mainCanvas_MouseUp">
+            <Button x:Name="Connect" Content="ButtonClient" Height="31" Canvas.Left="187" Canvas.Top="155" Width="89" Click="Connect_Click"/>
+        </Canvas>
         <TextBox Name="textbox_debugmsg" HorizontalAlignment="Left" Height="23" Margin="44,275,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
         <Button Name="button_debugmsg" Content="broadcast" HorizontalAlignment="Left" Margin="187,272,0,0" VerticalAlignment="Top" Width="85" Height="24" Click="button_debugmsg_Click"/>
 
