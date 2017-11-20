@@ -33,11 +33,13 @@ namespace App1
                 tcpListener.Listen(1);
                 isListen = true;
             }
+            bool changed = false;
             #region 检查是不是有客户端请求
             while (tcpListener.Poll(1, SelectMode.SelectRead))
             {
                 var client = tcpListener.Accept();
                 ClientSocks.Add(client);
+                changed = true;
             }
             #endregion
             foreach (var item in ClientSocks)
@@ -48,11 +50,32 @@ namespace App1
             foreach (var item in ClosedSocks)
             {
                 ClientSocks.Remove(item);
+                changed = true;
             }
             if (ClosedSocks.Count > 0)
             {
-                ClientSocks.Clear();
+                ClosedSocks.Clear();
             }
+            if (changed)
+            {
+                ClientsChanged?.Invoke(ClientSocks);
+            }
+        }
+        public void SendToClient(Socket client, MsgPack msg)
+        {
+            var buff = new byte[sizeof(MsgPack)];
+            fixed (byte* p = buff)
+            {
+                var pmp = (MsgPack*)p;
+                *pmp = msg;
+            }            
+            client?.Send(buff);
+        }
+
+        string _serverIP = "wait...";
+        internal string GetServerIP()
+        {
+            return _serverIP;
         }
 
         void UpdateClient(Socket client)
@@ -94,7 +117,7 @@ namespace App1
             {
                 return;
             }
-            client.Send(data);
+            client?.Send(data);
         }
 
         byte[] _GetSendData()
@@ -116,6 +139,10 @@ namespace App1
         }
 
         public Func<MsgPack?> GetSendData = () => new MsgPack() { X = DateTime.Now.Minute, Y = DateTime.Now.Second };
+        /// <summary>
+        /// Client count Changed
+        /// </summary>
+        public Action<List<Socket>> ClientsChanged = (a) => { };
     }
 
 }

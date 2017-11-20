@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+  <AbsoluteLayout
+    android:minWidth="440px"
+    android:minHeight="440px"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/absoluteLayout1">
+    <ImageView
+        android:src="@android:drawable/bottom_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageView1"
+        android:scrollbars="vertical"
+        android:scrollbarStyle="insideInset" />
+  </AbsoluteLayout>
+
+</LinearLayout>

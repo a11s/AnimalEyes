@@ -11,6 +11,7 @@ namespace App1
     using Android.Bluetooth;
     using System.Linq;
     using System;
+    using Android.Content;
 
     [Activity(Label = "App1", MainLauncher = true, Icon = "@mipmap/icon")]
     public class MainActivity : Activity
@@ -80,18 +81,25 @@ namespace App1
             if (isServer == null)
             {
                 //得过一段时间重试
+                Label1.Text = "Network not ready, retry";
             }
             else
             {
                 if (isServer == true)
                 {
-                    server = new App1Server();
-                    server.GetSendData = GetSendData;
+                    var intent = new Intent(this, typeof(ActivityServer));
+                    StartActivity(intent);
+
+                    //server = new App1Server();
+                    //server.GetSendData = GetSendData;
                 }
                 else
                 {
-                    client = new App1Client();
-                    client.OnDataArrival = OnDataArrival;
+                    var intent = new Intent(this, typeof(ActivityClient));
+                    StartActivity(intent);
+                    //client = new App1Client();
+                    //client.OnDataArrival = OnDataArrival;
+                    //App1Client.Debug = (s) => { Label1.Text += s; };
                 }
             }
 
@@ -99,13 +107,13 @@ namespace App1
             timer.Elapsed += Timer_Elapsed;
             timer.Start();
 
-            Label1.Text = GetIPAddress();
+            //Label1.Text = GetIPAddress();
 
         }
 
         private void OnDataArrival(MsgPack obj)
         {
-            Label1.Text = $"{obj.X},{obj.Y}";
+            Button1.Text = $"{obj.X},{obj.Y}";
         }
 
         private MsgPack? GetSendData()
@@ -188,10 +196,7 @@ namespace App1
                 () =>
                 {
                     UpdateNetwork();
-                    if (AutoSendData)
-                    {
-                        SendData();
-                    }
+
                 }
 
                 );
@@ -205,6 +210,8 @@ namespace App1
             }
             else
             {
+                timer.Dispose();
+                return;
                 if (isServer == true)
                 {
                     server.Update();
@@ -216,10 +223,7 @@ namespace App1
             }
         }
 
-        void SendData()
-        {
 
-        }
     }
 }
 

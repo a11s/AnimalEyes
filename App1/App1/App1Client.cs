@@ -15,13 +15,25 @@ using System.Net;
 
 namespace App1
 {
+
+    public enum ECMD : int
+    {
+        Move = MsgPack.CMD_MOVE,
+        Brightness = MsgPack.CMD_BRIGHTNESS,
+    }
     public unsafe struct MsgPack
     {
         public int X;
         public int Y;
+        public ECMD Cmd;
+        public const int CMD_MOVE = 0;
+        public const int CMD_BRIGHTNESS = 1;
+
+
+
         public override string ToString()
         {
-            return $"{X},{Y}";
+            return $"{Cmd}: {X},{Y}";
         }
     }
     public unsafe class App1Client

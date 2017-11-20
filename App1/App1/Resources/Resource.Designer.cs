@@ -60,20 +60,32 @@ namespace App1
 		public partial class Id
 		{
 			
-			// aapt resource value: 0x7f060003
-			public const int absoluteLayout1 = 2131099651;
+			// aapt resource value: 0x7f060000
+			public const int absoluteLayout1 = 2131099648;
+			
+			// aapt resource value: 0x7f060007
+			public const int checkBox1 = 2131099655;
 			
 			// aapt resource value: 0x7f060001
-			public const int checkBox1 = 2131099649;
+			public const int imageView1 = 2131099649;
+			
+			// aapt resource value: 0x7f060003
+			public const int listView1 = 2131099651;
+			
+			// aapt resource value: 0x7f060006
+			public const int myButton = 2131099654;
+			
+			// aapt resource value: 0x7f060005
+			public const int seekBar1 = 2131099653;
 			
 			// aapt resource value: 0x7f060004
-			public const int imageView1 = 2131099652;
+			public const int textIP = 2131099652;
 			
-			// aapt resource value: 0x7f060000
-			public const int myButton = 2131099648;
+			// aapt resource value: 0x7f060008
+			public const int textView1 = 2131099656;
 			
 			// aapt resource value: 0x7f060002
-			public const int textView1 = 2131099650;
+			public const int textViewDebug = 2131099650;
 			
 			static Id()
 			{
@@ -89,7 +101,16 @@ namespace App1
 		{
 			
 			// aapt resource value: 0x7f040000
-			public const int Main = 2130968576;
+			public const int layoutClient = 2130968576;
+			
+			// aapt resource value: 0x7f040001
+			public const int layoutServer = 2130968577;
+			
+			// aapt resource value: 0x7f040002
+			public const int lv_ClientInfo = 2130968578;
+			
+			// aapt resource value: 0x7f040003
+			public const int Main = 2130968579;
 			
 			static Layout()
 			{
