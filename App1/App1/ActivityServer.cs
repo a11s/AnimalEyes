@@ -41,6 +41,8 @@ namespace App1
         int LastX;
         int LastY;
         App1Server server = new App1Server();
+
+
         void InitComponents()
         {
             ListView1 = FindViewById<ListView>(Resource.Id.listView1);
@@ -85,7 +87,18 @@ namespace App1
             {
                 for (int i = 0; i < obj.Count; i++)
                 {
-                    adapter.data.Add(new ClientInfo() { Host = obj[i].RemoteEndPoint.ToString(), Brightness = 255, Client = obj[i] });
+                    var ci = new ClientInfo() { Brightness = 255, Client = obj[i] };
+                    string hostip;
+                    try
+                    {
+                        hostip = obj[i].RemoteEndPoint.ToString();
+                    }
+                    catch (System.Exception ex)
+                    {
+                        hostip = ex.Message;
+                    }
+                    ci.Host = hostip;
+                    adapter.data.Add(ci);
                 }
             }
             ListView1.Adapter = adapter;

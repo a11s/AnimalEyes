@@ -22,8 +22,15 @@ namespace App1
         bool isListen = false;
         List<Socket> ClientSocks = new List<Socket>();
         List<Socket> ClosedSocks = new List<Socket>();
+        public const int SERVER_HEARTBEAT_INTERVAL = 1;
+        public const int SERVER_HEARTBEAT_TIMEOUT = 3;
+
+
+        Dictionary<Socket, ClientData> ClientData = new Dictionary<Socket, ClientData>();
+
         public void Update()
         {
+
             if (!isListen)
             {
                 tcpListener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -39,6 +46,7 @@ namespace App1
             {
                 var client = tcpListener.Accept();
                 ClientSocks.Add(client);
+                ClientData[client] = new App1.ClientData();
                 changed = true;
             }
             #endregion
@@ -50,12 +58,15 @@ namespace App1
             foreach (var item in ClosedSocks)
             {
                 ClientSocks.Remove(item);
+                ClientData.Remove(item);
                 changed = true;
             }
             if (ClosedSocks.Count > 0)
             {
                 ClosedSocks.Clear();
             }
+
+
             if (changed)
             {
                 ClientsChanged?.Invoke(ClientSocks);
@@ -68,7 +79,7 @@ namespace App1
             {
                 var pmp = (MsgPack*)p;
                 *pmp = msg;
-            }            
+            }
             client?.Send(buff);
         }
 
@@ -77,7 +88,13 @@ namespace App1
         {
             return _serverIP;
         }
-
+        public void Close()
+        {
+            foreach (var item in ClientSocks)
+            {
+                item.Shutdown(SocketShutdown.Both);
+            }
+        }
         void UpdateClient(Socket client)
         {
             var haserror = client.Poll(0, SelectMode.SelectError);
@@ -103,11 +120,59 @@ namespace App1
             {
                 ClosedSocks.Add(client);
             }
+
+            #region HEARTBEAT
+            var cd = ClientData[client];
+            if (cd.LastMsgTime == DateTime.MinValue)
+            {
+                cd.LastMsgTime = DateTime.Now;
+            }
+            if (DateTime.Now.Subtract(cd.LastMsgTime).TotalSeconds > SERVER_HEARTBEAT_INTERVAL)
+            {
+                cd.LastMsgTime = DateTime.Now;
+                client.Send(MsgPack.HB);
+            }
+            #endregion
+
+            CheckTimeout(client);
+        }
+        private void CheckTimeout(Socket client)
+        {
+            var clientData = ClientData[client];
+            if (DateTime.Now.Subtract(clientData.LastMsgTime).TotalSeconds > App1Server.SERVER_HEARTBEAT_TIMEOUT)
+            {
+                ClosedSocks.Add(client);
+                clientData.LastMsgTime = DateTime.MinValue;
+            }
         }
 
         void DoRead(Socket client)
         {
-            //server do nothing
+            var canread = client.Poll(1, SelectMode.SelectRead);
+            if (canread)
+            {
+                var cd = ClientData[client];
+                var Recbuff = cd.Buff;
+                while (client.Available >= sizeof(MsgPack))
+                {
+                    var cnt = client.Receive(Recbuff, 0, sizeof(MsgPack), SocketFlags.None);
+                    if (cnt == sizeof(MsgPack))
+                    {
+                        fixed (byte* p = Recbuff)
+                        {
+                            var cmd = *(MsgPack*)p;
+                            cd.LastMsgTime = DateTime.Now;
+                            //OnDataArrival?.Invoke(cmd);
+                        }
+                    }
+                    else
+                    {
+                        //收到了关闭
+                        ClosedSocks.Add(client);
+                    }
+                }
+            }
+
         }
 
         void DoWrite(Socket client)
@@ -144,5 +209,9 @@ namespace App1
         /// </summary>
         public Action<List<Socket>> ClientsChanged = (a) => { };
     }
-
+    public unsafe class ClientData
+    {
+        public byte[] Buff = new byte[sizeof(MsgPack)];
+        public DateTime LastMsgTime = DateTime.MinValue;
+    }
 }

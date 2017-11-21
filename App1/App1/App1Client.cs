@@ -20,6 +20,7 @@ namespace App1
     {
         Move = MsgPack.CMD_MOVE,
         Brightness = MsgPack.CMD_BRIGHTNESS,
+        Heartbeat = MsgPack.CMD_HEARTBEAT,
     }
     public unsafe struct MsgPack
     {
@@ -28,7 +29,23 @@ namespace App1
         public ECMD Cmd;
         public const int CMD_MOVE = 0;
         public const int CMD_BRIGHTNESS = 1;
-
+        public const int CMD_HEARTBEAT = 2;
+        public static byte[] _hb;
+        public static byte[] HB
+        {
+            get
+            {
+                if (_hb == null)
+                {
+                    _hb = new byte[sizeof(MsgPack)];
+                    fixed (byte* p = _hb)
+                    {
+                        ((MsgPack*)p)->Cmd = ECMD.Heartbeat;
+                    }
+                }
+                return _hb;
+            }
+        }
 
 
         public override string ToString()
@@ -45,6 +62,8 @@ namespace App1
 
         public static Action<string> Debug = (a) => System.Diagnostics.Debug.WriteLine(a);
 
+        private ClientData clientData = new ClientData();
+        Socket sock;
         public void Update()
         {
             if (ClientSocks.Count == 0)
@@ -55,7 +74,11 @@ namespace App1
                 {
                     return;
                 }
-                Socket sock;
+                if (sock!=null)
+                {
+                    sock.Dispose();
+                    sock = null;
+                }
                 DateTime dt = DateTime.Now;
                 sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 sock.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 10);
@@ -80,6 +103,14 @@ namespace App1
             foreach (var item in ClosedSocks)
             {
                 ClientSocks.Remove(item);
+            }
+        }
+
+        internal void Stop()
+        {
+            foreach (var item in ClientSocks)
+            {
+                item.Shutdown(SocketShutdown.Both);
             }
         }
 
@@ -151,9 +182,30 @@ namespace App1
             {
                 ClosedSocks.Add(client);
             }
+            #region HEARTBEAT
+            var cd = clientData;
+            if (cd.LastMsgTime == DateTime.MinValue)
+            {
+                cd.LastMsgTime = DateTime.Now;
+            }
+            if (DateTime.Now.Subtract(cd.LastMsgTime).TotalSeconds > App1Server.SERVER_HEARTBEAT_INTERVAL)
+            {
+                cd.LastMsgTime = DateTime.Now;
+                client.Send(MsgPack.HB);
+            }
+            #endregion
+            CheckTimeout(client);
         }
 
-        byte[] Recbuff = new byte[sizeof(MsgPack)];
+        private void CheckTimeout(Socket client)
+        {
+            if (DateTime.Now.Subtract(clientData.LastMsgTime).TotalSeconds > App1Server.SERVER_HEARTBEAT_TIMEOUT)
+            {
+                ClosedSocks.Add(client);
+                clientData.LastMsgTime = DateTime.MinValue;
+            }
+        }
+
         void DoRead(Socket client)
         {
             var canread = client.Poll(1, SelectMode.SelectRead);
@@ -161,12 +213,15 @@ namespace App1
             {
                 while (client.Available >= sizeof(MsgPack))
                 {
+                    var Recbuff = clientData.Buff;
                     var cnt = client.Receive(Recbuff, 0, sizeof(MsgPack), SocketFlags.None);
                     if (cnt == sizeof(MsgPack))
                     {
                         fixed (byte* p = Recbuff)
                         {
-                            OnDataArrival?.Invoke(*(MsgPack*)p);
+                            var cmd = *(MsgPack*)p;
+                            clientData.LastMsgTime = DateTime.Now;
+                            OnDataArrival?.Invoke(cmd);
                         }
                     }
                     else

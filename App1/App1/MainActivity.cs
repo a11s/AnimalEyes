@@ -103,9 +103,9 @@ namespace App1
                 }
             }
 
-            timer = new Timer(1000);
-            timer.Elapsed += Timer_Elapsed;
-            timer.Start();
+            //timer = new Timer(3000);
+            //timer.Elapsed += Timer_Elapsed;
+            //timer.Start();
 
             //Label1.Text = GetIPAddress();
 
