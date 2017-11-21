@@ -214,12 +214,5 @@ namespace App1
         }
     }
 
-    public class ClientInfo
-    {
-        public string Host { get; set; }
 
-        public int Brightness { get; set; }
-
-        public Socket Client { get; set; }
-    }
 }

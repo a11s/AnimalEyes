@@ -5,13 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PCDebugTool"
         mc:Ignorable="d"
-        Title="MainWindow" x:Name="MainWindow1" Height="350" Width="525" Loaded="MainWindow_Loaded">
+        Title="MainWindow" x:Name="MainWindow1" Height="350" Width="525" >
     <Grid>
-        <Canvas x:Name="mainCanvas" MouseUp="mainCanvas_MouseUp">
-            <Button x:Name="Connect" Content="ButtonClient" Height="31" Canvas.Left="187" Canvas.Top="155" Width="89" Click="Connect_Click"/>
-        </Canvas>
-        <TextBox Name="textbox_debugmsg" HorizontalAlignment="Left" Height="23" Margin="44,275,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
-        <Button Name="button_debugmsg" Content="broadcast" HorizontalAlignment="Left" Margin="187,272,0,0" VerticalAlignment="Top" Width="85" Height="24" Click="button_debugmsg_Click"/>
+        <Button x:Name="ButtonTestServer" Content="TestServer" HorizontalAlignment="Left" Height="63" Margin="34,41,0,0" VerticalAlignment="Top" Width="117" Click="ButtonTestServer_Click"/>
+        <Button x:Name="ButtonTestClient" Content="TestClient" HorizontalAlignment="Left" Height="63" Margin="34,132,0,0" VerticalAlignment="Top" Width="117" Click="ButtonTestClient_Click"/>
+
 
     </Grid>
 </Window>

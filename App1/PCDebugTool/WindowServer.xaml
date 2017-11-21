@@ -1,0 +1,15 @@
+﻿<Window x:Class="PCDebugTool.WindowServer"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PCDebugTool"
+        mc:Ignorable="d"
+        Title="WindowServer" Height="468.387" Width="314.516" Loaded="Window_Loaded" Closing="Window_Closing">
+    <Grid>
+        <Canvas x:Name="mainCanvas" Background="Black" Margin="17,5,0,204" VerticalAlignment="Top" HorizontalAlignment="Left" Width="272" Height="255" MouseMove="mainCanvas_MouseMove">
+            <Image x:Name="Image1" Source="mouse1.png" Height="50" Width="50"></Image>
+        </Canvas>
+        <ListView x:Name="lv" Margin="7,281,0,0" HorizontalAlignment="Left" Width="292"></ListView>
+    </Grid>
+</Window>

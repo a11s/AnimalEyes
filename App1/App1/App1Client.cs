@@ -64,17 +64,24 @@ namespace App1
 
         private ClientData clientData = new ClientData();
         Socket sock;
+        public volatile int UpdateRunning = 0;
         public void Update()
         {
+            if (UpdateRunning > 0)
+            {
+                return;
+            }
+            UpdateRunning = 1;
             if (ClientSocks.Count == 0)
             {
                 //需要建立链接
                 var ipep = GetServerIpep();
                 if (ipep == null)
                 {
+                    UpdateRunning = 0;
                     return;
                 }
-                if (sock!=null)
+                if (sock != null)
                 {
                     sock.Dispose();
                     sock = null;
@@ -85,15 +92,17 @@ namespace App1
                 sock.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 10);
                 try
                 {
-                    sock.Connect(ipep);
+                    sock.Connect(ipep);                    
                 }
                 catch
                 {
+                    UpdateRunning = 0;                    
                     //连不上，
                     return;
                 }
                 Debug("connect timeout:" + DateTime.Now.Subtract(dt).TotalMilliseconds);
                 ClientSocks.Add(sock);
+                
             }
 
             foreach (var item in ClientSocks)
@@ -104,6 +113,7 @@ namespace App1
             {
                 ClientSocks.Remove(item);
             }
+            UpdateRunning = 0;
         }
 
         internal void Stop()
@@ -191,7 +201,15 @@ namespace App1
             if (DateTime.Now.Subtract(cd.LastMsgTime).TotalSeconds > App1Server.SERVER_HEARTBEAT_INTERVAL)
             {
                 cd.LastMsgTime = DateTime.Now;
-                client.Send(MsgPack.HB);
+                try
+                {
+                    client.Send(MsgPack.HB);
+
+                }
+                catch (Exception ex)
+                {
+                    ClosedSocks.Add(client);
+                }
             }
             #endregion
             CheckTimeout(client);

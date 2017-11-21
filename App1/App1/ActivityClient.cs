@@ -23,7 +23,7 @@ namespace App1
             //context.getWindow().setAttributes(lp);
 
             var lp = context.Window.Attributes;
-            lp.ScreenBrightness = brightness/255F;
+            lp.ScreenBrightness = brightness / 255F;
             context.Window.Attributes = lp;
         }
         private void setScreenManualMode()
@@ -31,7 +31,7 @@ namespace App1
             ContentResolver contentResolver = this.ContentResolver;
             try
             {
-                
+
             }
             catch (Exception)
             {
@@ -56,8 +56,8 @@ namespace App1
         }
         public override void OnBackPressed()
         {
-            if (timer!=null)
-            {                
+            if (timer != null)
+            {
                 timer.Dispose();
             }
             client.Stop();
@@ -130,7 +130,10 @@ namespace App1
             this.RunOnUiThread(
                 () =>
                 {
-                    client?.Update();
+                    if (client?.UpdateRunning == 0)
+                    {
+                        client?.Update();
+                    }
 
                 }
 

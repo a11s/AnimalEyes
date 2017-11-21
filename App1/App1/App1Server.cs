@@ -42,7 +42,7 @@ namespace App1
             }
             bool changed = false;
             #region 检查是不是有客户端请求
-            while (tcpListener.Poll(1, SelectMode.SelectRead))
+            while (tcpListener != null && tcpListener.Poll(1, SelectMode.SelectRead))
             {
                 var client = tcpListener.Accept();
                 ClientSocks.Add(client);
@@ -90,10 +90,13 @@ namespace App1
         }
         public void Close()
         {
+            tcpListener?.Close();
+            tcpListener = null;
             foreach (var item in ClientSocks)
             {
                 item.Shutdown(SocketShutdown.Both);
             }
+
         }
         void UpdateClient(Socket client)
         {
@@ -130,7 +133,15 @@ namespace App1
             if (DateTime.Now.Subtract(cd.LastMsgTime).TotalSeconds > SERVER_HEARTBEAT_INTERVAL)
             {
                 cd.LastMsgTime = DateTime.Now;
-                client.Send(MsgPack.HB);
+                try
+                {
+                    client.Send(MsgPack.HB);
+
+                }
+                catch (Exception ex)
+                {
+                    ClosedSocks.Add(client);
+                }
             }
             #endregion
 
@@ -213,5 +224,14 @@ namespace App1
     {
         public byte[] Buff = new byte[sizeof(MsgPack)];
         public DateTime LastMsgTime = DateTime.MinValue;
+    }
+
+    public class ClientInfo
+    {
+        public string Host { get; set; }
+
+        public int Brightness { get; set; }
+
+        public Socket Client { get; set; }
     }
 }
