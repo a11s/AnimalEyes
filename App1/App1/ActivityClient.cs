@@ -70,6 +70,8 @@ namespace App1
         App1Client client;
 
         Timer timer;
+        private int LastX;
+        private int LastY;
 
         void InitComponents()
         {
@@ -82,7 +84,7 @@ namespace App1
             AbsoluteLayout.LayoutParams lp = new AbsoluteLayout.LayoutParams(100, 100, 100, 100);
             Image1.LayoutParameters = lp;
 
-
+            this.AbsoluteLayout1.SetBackgroundColor(Android.Graphics.Color.White);
 
 
             if (timer != null)
@@ -106,6 +108,12 @@ namespace App1
                 case ECMD.Move:
                     var x = obj.X;
                     var y = obj.Y;
+                    if (LastX == x && LastY == y)
+                    {
+                        return;
+                    }
+                    LastX = x;
+                    LastY = y;
                     var lp = (AbsoluteLayout.LayoutParams)Image1.LayoutParameters;
                     lp.X = (int)x;
                     lp.Y = (int)y;

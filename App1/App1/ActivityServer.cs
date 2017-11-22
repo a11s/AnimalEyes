@@ -54,6 +54,7 @@ namespace App1
             AbsoluteLayout.LayoutParams lp = new AbsoluteLayout.LayoutParams(100, 100, 100, 100);
             Image1.LayoutParameters = lp;
 
+            this.AbsoluteLayout1.SetBackgroundColor(Android.Graphics.Color.White);
             clients.Clear();
             clients.Add(new ClientInfo() { Host = server.GetServerIP(), Brightness = 255, Client = null });
 

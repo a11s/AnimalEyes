@@ -18,61 +18,21 @@ namespace PCDebugTool
     using System.Net;
     using System.Net.Sockets;
     using System.Timers;
-
+    using static Helper;
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
-
         public MainWindow()
         {
             InitializeComponent();
-
-
         }
-
-
-
-        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-
-        }
-        async void UpdateNetwork()
-        {
-
-
-
-
-        }
-        private void mainCanvas_MouseUp(object sender, MouseButtonEventArgs e)
-        {
-            //var pos = e.GetPosition(mainCanvas);
-            //var str = $"{pos.X},{pos.Y}";
-            //var buff = Encoding.UTF8.GetBytes(str);
-            //try
-            //{
-
-
-            //}
-            //catch (System.Exception ex)
-            //{
-            //    this.Title = ex.Message;
-            //    throw;
-            //}
-        }
-
-
-
-
         WindowServer server;
         WindowClient client;
         private void ButtonTestServer_Click(object sender, RoutedEventArgs e)
         {
-            if (server != null)
-            {
-                server.Close();
-            }
+            if (server != null) server.Close();
             server = new WindowServer();
             server.Show();
         }

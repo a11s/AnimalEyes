@@ -55,6 +55,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Helper.cs" />
     <Compile Include="WindowClient.xaml.cs">
       <DependentUpon>WindowClient.xaml</DependentUpon>
     </Compile>
